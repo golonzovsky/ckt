@@ -22,12 +22,15 @@ func main() {
 		log.Fatalf("unexpected error loading kubeconfig file: %v", err)
 	}
 
-	for _, user := range config.AuthInfos {
-		if user.AuthProvider == nil || user.AuthProvider.Config == nil{
+	for name, authInfo := range config.AuthInfos {
+		if authInfo.AuthProvider == nil || authInfo.AuthProvider.Config == nil {
 			continue
 		}
-		authConfig := user.AuthProvider.Config
-		delete(authConfig, "access-token")
+		authConfig := authInfo.AuthProvider.Config
+		if _, exist := authConfig["access-token"]; exist {
+			log.Printf("cleaned token for %s", name)
+			delete(authConfig, "access-token")
+		}
 	}
 
 	if err := clientcmd.WriteToFile(*config, *kubeconfig); err != nil {
